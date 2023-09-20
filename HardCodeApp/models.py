@@ -10,27 +10,17 @@ class Product(models.Model):
     owner = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
-        related_name="products",
+        related_name="owner_products",
     )
-
-
-class Access(models.Model):
-    product = models.ForeignKey(
-        Product,
-        on_delete=models.CASCADE,
-        related_name="accesses",
-    )
-    user = models.ForeignKey(
+    users = models.ManyToManyField(
         User,
-        on_delete=models.CASCADE,
-        related_name="accesses",
+        related_name="users_products",
     )
 
 
 class Lesson(models.Model):
-    product = models.ForeignKey(
+    products = models.ManyToManyField(
         Product,
-        on_delete=models.CASCADE,
         related_name="lessons",
     )
     name = models.CharField(max_length=10)
@@ -49,4 +39,12 @@ class View(models.Model):
         on_delete=models.CASCADE,
         related_name="views",
     )
-    finished = models.BooleanField()
+    progress = models.IntegerField()
+    is_finished = models.BooleanField(default=False)
+
+    def save(self, force_insert=False, force_update=False, using=None, update_fields=None):
+        if self.progress > 15:  # its temporary version
+            self.is_finished = True
+        super().save(force_insert, force_update, using, update_fields)
+
+
