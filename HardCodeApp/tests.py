@@ -11,54 +11,25 @@ from HardCodeApp.models import Product, Lesson, View
 
 # Create your tests here.
 
-class AnimalListTestCase(APITestCase):
+class LessonsByUserListTestCase(APITestCase):
     def setUp(self):
-        self.owner = User.objects.create(username="owner")
-        self.user = User.objects.create(username="first")
+        self.user = UserFactory(username="first")
         self.url = reverse("v1:user_lessons", args=[self.user.id])
-        # prepare data without Factories
+        # user 1
+        self.product_1 = ProductFactory()
+        self.product_1.users.set([self.user])
+        ViewFactory(user=self.user)
 
-        # product
-        self.product = Product.objects.create(
-            owner=self.owner,
-        )
-        self.product.users.set([self.user])
-        # lessons
-        self.lesson_1 = Lesson.objects.create(
-            name="lesson_first",
-            duration=1,
-        )
-        self.lesson_1.products.set([self.product])
-        self.lesson_2 = Lesson.objects.create(
-            name="lesson_second",
-            duration=2,
-        )
-        self.lesson_2.products.set([self.product])
+        # user 1
+        self.product_2 = ProductFactory()
+        self.product_2.users.set([self.user])
+        ViewFactory(user=self.user)
 
-        # lesson without view
-        self.lesson_3 = Lesson.objects.create(
-            name="lesson_third",
-            duration=3,
-        )
-        self.lesson_3.products.set([self.product])
-
-        # non product lesson
-        self.lesson_4 = Lesson.objects.create(
-            name="lesson_four",
-            duration=4,
-        )
-
-        # views
-        self.view_1 = View.objects.create(
-            lesson_id=self.lesson_1.pk,
-            user_id=self.user.pk,
-            progress=1
-        )
-        self.view_2 = View.objects.create(
-            lesson_id=self.lesson_2.pk,
-            user_id=self.user.pk,
-            progress=2
-        )
+        # user 2
+        self.user_2 = UserFactory(username='second')
+        self.product_2 = ProductFactory()
+        self.product_2.users.set([self.user_2])
+        ViewFactory(user=self.user_2)
 
     def test_url(self):
         self.assertEqual(self.url, f"/v1/user_lessons/{self.user.id}/")
@@ -68,19 +39,27 @@ class AnimalListTestCase(APITestCase):
         response = self.client.get(url)
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
 
-    def test_simple(self):
+    def test_simple_user_1(self):
         # TODO optimize queries
         with self.assertNumQueries(5):
             response = self.client.get(self.url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(response.data), 2)
-        self.assertEqual(len(response.data[0]), 5)
+        self.assertEqual(len(response.data[0]), 3)
+
+    def test_simple_user_2(self):
+        with self.assertNumQueries(4):
+            response = self.client.get(f"/v1/user_lessons/{self.user_2.id}/")
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data), 1)
+        self.assertEqual(len(response.data[0]), 3)
 
 
 class ProductLessonsListTestCase(APITestCase):
     def setUp(self):
         self.owner = User.objects.create(username="owner")
         self.user = UserFactory()
+
         # product 1
         self.product_1 = ProductFactory()
         self.product_1.users.set([self.user])
@@ -101,7 +80,7 @@ class ProductLessonsListTestCase(APITestCase):
         # Один юзер имеет доступ к двум разным продуктам, и мы хотим в списке увидеть только уроки
         # от 1 продукта
         # TODO optimize queries
-        with self.assertNumQueries(1):
-            response = self.client.get(self.url)
+        response = self.client.get(self.url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data), 1)
 
