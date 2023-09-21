@@ -80,50 +80,28 @@ class AnimalListTestCase(APITestCase):
 class ProductLessonsListTestCase(APITestCase):
     def setUp(self):
         self.owner = User.objects.create(username="owner")
-        self.user_1 = User.objects.create(username="first")
-        self.user_2 = User.objects.create(username="second")
+        self.user = UserFactory()
         # product 1
-        self.product_1 = Product.objects.create(
-            owner=self.owner,
-        )
-        self.product_1.users.set([self.user_1])
-        self.lesson_1 = Lesson.objects.create(
-            name="lesson_first",
-            duration=1,
-        )
-        self.lesson_1.products.set([self.product_1])
-        self.lesson_2 = Lesson.objects.create(
-            name="lesson_second",
-            duration=2,
-        )
-        self.lesson_2.products.set([self.product_1])
-        self.view_1 = View.objects.create(
-            lesson_id=self.lesson_1.pk,
-            user_id=self.user_1.pk,
-            progress=1
-        )
-        self.view_2 = View.objects.create(
-            lesson_id=self.lesson_2.pk,
-            user_id=self.user_1.pk,
-            progress=2
-        )
+        self.product_1 = ProductFactory()
+        self.product_1.users.set([self.user])
+        ViewFactory(user=self.user)
 
         # product 2
-        self.product_2 = Product.objects.create(
-            owner=self.owner,
-        )
-        self.product_2.users.set([self.user_2])
+        self.product_2 = ProductFactory()
+        self.product_2.users.set([self.user])
+        ViewFactory(user=self.user)
 
-        self.url = reverse("v1:product_lessons", args=[self.user_1.id, self.product_1.id])
+
+        self.url = reverse("v1:product_lessons", args=[self.user.id, self.product_1.id])
 
     def test_url(self):
-        self.assertEqual(self.url, f"/v1/product_lessons/{self.user_1.id}/product/{self.product_1.id}/")
+        self.assertEqual(self.url, f"/v1/product_lessons/{self.user.id}/product/{self.product_1.id}/")
 
     def test_simple(self):
+        # Один юзер имеет доступ к двум разным продуктам, и мы хотим в списке увидеть только уроки
+        # от 1 продукта
         # TODO optimize queries
-        with self.assertNumQueries(3):
+        with self.assertNumQueries(1):
             response = self.client.get(self.url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
-        view = ViewFactory()
-        print(123)
