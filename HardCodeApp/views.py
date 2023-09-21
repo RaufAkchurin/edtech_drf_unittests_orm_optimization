@@ -1,8 +1,7 @@
-from django.contrib.auth.models import User
-from django.shortcuts import render, get_object_or_404
+
 from rest_framework import generics
 
-from HardCodeApp.models import Lesson, View, Product
+from HardCodeApp.models import Lesson
 from HardCodeApp.serializers import LessonSerializer
 
 

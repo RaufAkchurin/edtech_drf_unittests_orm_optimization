@@ -47,6 +47,7 @@ class View(models.Model):
     )
     progress = models.IntegerField()
     is_finished = models.BooleanField(default=False)
+    last_viewed = models.DateTimeField(auto_now=True)
 
     def save(self, force_insert=False, force_update=False, using=None, update_fields=None):
         if self.progress:
