@@ -54,17 +54,18 @@ class LessonsByUserListTestCase(APITestCase):
         response = self.client.get(url)
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
 
+    def test_num_queries(self):
+        with self.assertNumQueries(2):
+            self.client.get(self.url)
+
     def test_simple_user_1(self):
-        # TODO optimize queries
-        with self.assertNumQueries(5):
-            response = self.client.get(self.url)
+        response = self.client.get(self.url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(response.data), 2)
         self.assertEqual(len(response.data[0]), 3)
 
     def test_simple_user_2(self):
-        with self.assertNumQueries(4):
-            response = self.client.get(f"/v1/user_lessons/{self.user_2.id}/")
+        response = self.client.get(f"/v1/user_lessons/{self.user_2.id}/")
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(response.data), 1)
         self.assertEqual(len(response.data[0]), 3)
@@ -93,6 +94,10 @@ class ProductLessonsListTestCase(APITestCase):
 
     def test_url(self):
         self.assertEqual(self.url, f"/v1/product_lessons/{self.user.id}/product/{self.product_1.id}/")
+
+    def test_num_queries(self):
+        with self.assertNumQueries(1):
+            self.client.get(self.url)
 
     def test_simple(self):
         # Один юзер имеет доступ к двум разным продуктам, и мы хотим в списке увидеть только уроки

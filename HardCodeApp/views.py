@@ -10,26 +10,22 @@ from HardCodeApp.serializers import LessonSerializer, LessonSerializerViewed
 class LessonsByUserView(generics.ListAPIView):
     serializer_class = LessonSerializer
     queryset = Lesson.objects.all()
-    queryset = queryset.prefetch_related("products")
+    queryset = queryset.prefetch_related("views")
 
     def get_queryset(self):
         user_id = self.request.parser_context["kwargs"].get("pk", None)
         queryset = super().get_queryset().filter(views__user_id=user_id)
-        if queryset.count() > 0:
-            return queryset
-        else:
-            return super().get_queryset()
+        return queryset
 
 
 class LessonsByProductUserView(generics.ListAPIView):
     serializer_class = LessonSerializerViewed
-    queryset = Lesson.objects.all()
+    queryset = Lesson.objects.all().prefetch_related("views")
 
     def get_queryset(self):
         user_id = self.request.parser_context["kwargs"].get("user", None)
         product_id = self.request.parser_context["kwargs"].get("product", None)
-        queryset = super().get_queryset().filter(views__user_id=user_id)
-        queryset = queryset.filter(products__id__in=[product_id])
+        queryset = self.queryset.filter(products__id=product_id,  views__user_id=user_id)
         return queryset
 
 
