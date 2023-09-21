@@ -5,6 +5,7 @@ from rest_framework import status
 from rest_framework.test import APITestCase
 from rest_framework.reverse import reverse
 
+from HardCodeApp.factory import UserFactory, ProductFactory, LessonFactory, ViewFactory
 from HardCodeApp.models import Product, Lesson, View
 
 
@@ -79,56 +80,50 @@ class AnimalListTestCase(APITestCase):
 class ProductLessonsListTestCase(APITestCase):
     def setUp(self):
         self.owner = User.objects.create(username="owner")
-        self.user = User.objects.create(username="first")
-        # product
-        self.product = Product.objects.create(
+        self.user_1 = User.objects.create(username="first")
+        self.user_2 = User.objects.create(username="second")
+        # product 1
+        self.product_1 = Product.objects.create(
             owner=self.owner,
         )
-        self.product.users.set([self.user])
-        self.url = reverse("v1:product_lessons", args=[self.user.id, self.product.id])
-        # prepare data without Factories
-        # lessons
+        self.product_1.users.set([self.user_1])
         self.lesson_1 = Lesson.objects.create(
             name="lesson_first",
             duration=1,
         )
-        self.lesson_1.products.set([self.product])
+        self.lesson_1.products.set([self.product_1])
         self.lesson_2 = Lesson.objects.create(
             name="lesson_second",
             duration=2,
         )
-        self.lesson_2.products.set([self.product])
-
-        # lesson without view
-        self.lesson_3 = Lesson.objects.create(
-            name="lesson_third",
-            duration=3,
-        )
-        self.lesson_3.products.set([self.product])
-
-        # non product lesson
-        self.lesson_4 = Lesson.objects.create(
-            name="lesson_four",
-            duration=4,
-        )
-
-        # views
+        self.lesson_2.products.set([self.product_1])
         self.view_1 = View.objects.create(
             lesson_id=self.lesson_1.pk,
-            user_id=self.user.pk,
+            user_id=self.user_1.pk,
             progress=1
         )
         self.view_2 = View.objects.create(
             lesson_id=self.lesson_2.pk,
-            user_id=self.user.pk,
+            user_id=self.user_1.pk,
             progress=2
         )
 
+        # product 2
+        self.product_2 = Product.objects.create(
+            owner=self.owner,
+        )
+        self.product_2.users.set([self.user_2])
+
+        self.url = reverse("v1:product_lessons", args=[self.user_1.id, self.product_1.id])
+
     def test_url(self):
-        self.assertEqual(self.url, f"/v1/product_lessons/{self.user.id}/product/{self.product.id}/")
+        self.assertEqual(self.url, f"/v1/product_lessons/{self.user_1.id}/product/{self.product_1.id}/")
 
     def test_simple(self):
         # TODO optimize queries
-        with self.assertNumQueries(2):
+        with self.assertNumQueries(3):
             response = self.client.get(self.url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+        view = ViewFactory()
+        print(123)

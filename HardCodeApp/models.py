@@ -54,4 +54,7 @@ class View(models.Model):
                 self.is_finished = True
         super().save(force_insert, force_update, using, update_fields)
 
+    def __str__(self):
+        return f"lesson  {self.lesson}, user  {self.user}"
+
 
