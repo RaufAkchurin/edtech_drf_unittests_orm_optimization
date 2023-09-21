@@ -7,9 +7,8 @@ from rest_framework.reverse import reverse
 
 from HardCodeApp.factory import UserFactory, ProductFactory, LessonFactory, ViewFactory
 from HardCodeApp.models import Product, Lesson, View
-
-
 # Create your tests here.
+
 
 class LessonsByUserListTestCase(APITestCase):
     def setUp(self):
@@ -63,13 +62,16 @@ class ProductLessonsListTestCase(APITestCase):
         # product 1
         self.product_1 = ProductFactory()
         self.product_1.users.set([self.user])
-        ViewFactory(user=self.user)
+        self.lesson_1 = LessonFactory()
+        self.lesson_1.products.set([self.product_1])
+        ViewFactory(lesson=self.lesson_1, user=self.user)
 
         # product 2
         self.product_2 = ProductFactory()
         self.product_2.users.set([self.user])
-        ViewFactory(user=self.user)
-
+        self.lesson_2 = LessonFactory()
+        self.lesson_2.products.set([self.product_2])
+        ViewFactory(lesson=self.lesson_2, user=self.user)
 
         self.url = reverse("v1:product_lessons", args=[self.user.id, self.product_1.id])
 

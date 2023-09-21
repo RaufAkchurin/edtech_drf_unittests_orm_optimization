@@ -30,7 +30,7 @@ class LessonsByProductUserView(generics.ListAPIView):
         user_id = self.request.parser_context["kwargs"].get("user", None)
         product_id = self.request.parser_context["kwargs"].get("product", None)
         queryset = super().get_queryset().filter(views__user_id=user_id)
-        queryset = queryset.filter(products__in=[product_id])
+        queryset = queryset.filter(products__id__in=[product_id])
         return queryset
 
 
