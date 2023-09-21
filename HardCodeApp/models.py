@@ -43,8 +43,9 @@ class View(models.Model):
     is_finished = models.BooleanField(default=False)
 
     def save(self, force_insert=False, force_update=False, using=None, update_fields=None):
-        if self.progress > 15:  # its temporary version
-            self.is_finished = True
+        if self.progress:
+            if self.progress > 15:  # its temporary version
+                self.is_finished = True
         super().save(force_insert, force_update, using, update_fields)
 
 
