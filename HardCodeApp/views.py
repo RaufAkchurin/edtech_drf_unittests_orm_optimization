@@ -2,7 +2,7 @@
 from rest_framework import generics
 
 from HardCodeApp.models import Lesson
-from HardCodeApp.serializers import LessonSerializer
+from HardCodeApp.serializers import LessonSerializer, LessonSerializerViewed
 
 
 # Create your views here.
@@ -22,7 +22,7 @@ class LessonsByUserView(generics.ListAPIView):
 
 
 class LessonsByProductUserView(generics.ListAPIView):
-    serializer_class = LessonSerializer
+    serializer_class = LessonSerializerViewed
     queryset = Lesson.objects.all()
 
     def get_queryset(self):

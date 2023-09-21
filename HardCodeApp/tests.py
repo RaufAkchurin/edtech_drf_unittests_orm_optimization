@@ -1,3 +1,5 @@
+import datetime
+
 from django.contrib.auth.models import User
 from rest_framework import status
 from rest_framework.test import APITestCase
@@ -5,6 +7,23 @@ from rest_framework.reverse import reverse
 import time
 
 from HardCodeApp.factory import UserFactory, ProductFactory, LessonFactory, ViewFactory
+
+
+class ViewModelTestCase(APITestCase):
+    def test_is_finished_zero_division(self):
+        lesson = LessonFactory(duration=0)
+        view = ViewFactory(lesson=lesson, progress=0)
+        self.assertEqual(view.is_finished, False)
+
+    def test_is_finished_changes(self):
+        lesson = LessonFactory(duration=100)
+        view = ViewFactory(lesson=lesson, progress=50)
+        self.assertEqual(view.is_finished, False)
+
+        view.progress = 85
+        view.save()
+        view.refresh_from_db()
+        self.assertEqual(view.is_finished, True)
 
 
 class LessonsByUserListTestCase(APITestCase):
@@ -68,7 +87,7 @@ class ProductLessonsListTestCase(APITestCase):
         self.product_2.users.set([self.user])
         self.lesson_2 = LessonFactory()
         self.lesson_2.products.set([self.product_2])
-        self.view_2 =ViewFactory(lesson=self.lesson_2, user=self.user)
+        self.view_2 = ViewFactory(lesson=self.lesson_2, user=self.user)
 
         self.url = reverse("v1:product_lessons", args=[self.user.id, self.product_1.id])
 
@@ -82,4 +101,8 @@ class ProductLessonsListTestCase(APITestCase):
         response = self.client.get(self.url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(response.data), 1)
+        self.assertEqual(len(response.data[0]), 4)
 
+        # assert last_viewed field
+        self.assertEqual(response.data[0]['last_viewed'], self.view_1.last_viewed)
+        self.assertNotEqual(response.data[0]['last_viewed'], self.view_2.last_viewed)

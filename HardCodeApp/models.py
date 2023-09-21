@@ -50,12 +50,13 @@ class View(models.Model):
     last_viewed = models.DateTimeField(auto_now=True)
 
     def save(self, force_insert=False, force_update=False, using=None, update_fields=None):
-        if self.progress:
-            if self.progress > 15:  # its temporary version
-                self.is_finished = True
+        try:
+            if self.progress and self.lesson.duration:
+                if self.progress / self.lesson.duration >= 0.8:
+                    self.is_finished = True
+        except ZeroDivisionError:
+            self.is_finished = False
         super().save(force_insert, force_update, using, update_fields)
 
     def __str__(self):
         return f"lesson  {self.lesson}, user  {self.user}"
-
-
