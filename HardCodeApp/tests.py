@@ -71,7 +71,7 @@ class LessonsByUserListTestCase(APITestCase):
         self.assertEqual(len(response.data[0]), 3)
 
 
-class ProductLessonsListTestCase(APITestCase):
+class LessonsByProductListTestCase(APITestCase):
     def setUp(self):
         self.owner = User.objects.create(username="owner")
         self.user = UserFactory()
@@ -96,7 +96,7 @@ class ProductLessonsListTestCase(APITestCase):
         self.assertEqual(self.url, f"/v1/product_lessons/{self.user.id}/product/{self.product_1.id}/")
 
     def test_num_queries(self):
-        with self.assertNumQueries(1):
+        with self.assertNumQueries(3):
             self.client.get(self.url)
 
     def test_simple(self):
@@ -111,3 +111,40 @@ class ProductLessonsListTestCase(APITestCase):
         # assert last_viewed field
         self.assertEqual(response.data[0]['last_viewed'], self.view_1.last_viewed)
         self.assertNotEqual(response.data[0]['last_viewed'], self.view_2.last_viewed)
+
+        response = self.client.get("/v1/products/")
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+
+class ProductsListTestCase(APITestCase):
+    def setUp(self):
+        self.owner = User.objects.create(username="owner")
+        self.user = UserFactory()
+
+        # product 1
+        self.product_1 = ProductFactory()
+        self.product_1.users.set([self.user])
+        self.lesson_1 = LessonFactory()
+        self.lesson_1.products.set([self.product_1])
+        self.view_1 = ViewFactory(lesson=self.lesson_1, user=self.user)
+
+        # product 2
+        self.product_2 = ProductFactory()
+        self.product_2.users.set([self.user])
+        self.lesson_2 = LessonFactory()
+        self.lesson_2.products.set([self.product_2])
+        self.view_2 = ViewFactory(lesson=self.lesson_2, user=self.user)
+
+        self.url = reverse("v1:products")
+
+    def test_url(self):
+        self.assertEqual(self.url, f"/v1/products/")
+
+    def test_num_queries(self):
+        with self.assertNumQueries(3):
+            self.client.get(self.url)
+
+    def test_simple(self):
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data), 2)

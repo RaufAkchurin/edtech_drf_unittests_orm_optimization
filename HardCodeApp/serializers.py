@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from HardCodeApp.models import Lesson, View
+from HardCodeApp.models import Lesson, View, Product
 
 
 class ViewSerializer(serializers.ModelSerializer):
@@ -17,7 +17,7 @@ class LessonSerializer(serializers.ModelSerializer):
         fields = ('id', 'name', 'views')
 
 
-class LessonSerializerViewed(serializers.ModelSerializer):
+class LessonViewedSerializer(serializers.ModelSerializer):
     views = ViewSerializer(many=True)
     last_viewed = serializers.SerializerMethodField()
 
@@ -31,3 +31,9 @@ class LessonSerializerViewed(serializers.ModelSerializer):
             return last_viewed[0]['last_viewed']
         else:
             return None
+
+
+class ProductsSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Product
+        fields = "__all__"
