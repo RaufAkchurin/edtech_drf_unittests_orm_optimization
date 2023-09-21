@@ -1,9 +1,17 @@
 from rest_framework import serializers
 
-from HardCodeApp.models import Lesson
+from HardCodeApp.models import Lesson, View
 
 
-class UserLessonsListSerializer(serializers.ModelSerializer):
+class ViewSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = View
+        fields = ('progress', 'is_finished')
+
+
+class LessonSerializer(serializers.ModelSerializer):
+    views = ViewSerializer(many=True)
+
     class Meta:
         model = Lesson
-        fields = "__all__"
+        fields = ('id', 'name', 'views')

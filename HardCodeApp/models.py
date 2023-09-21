@@ -17,6 +17,9 @@ class Product(models.Model):
         related_name="users_products",
     )
 
+    def __str__(self):
+        return f"{self.name}"
+
 
 class Lesson(models.Model):
     products = models.ManyToManyField(
@@ -26,6 +29,9 @@ class Lesson(models.Model):
     name = models.CharField(max_length=10)
     link = models.URLField()
     duration = models.IntegerField()
+
+    def __str__(self):
+        return f"{self.name}"
 
 
 class View(models.Model):
