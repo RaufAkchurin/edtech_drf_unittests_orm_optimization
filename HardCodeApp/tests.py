@@ -74,3 +74,61 @@ class AnimalListTestCase(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(response.data), 2)
         self.assertEqual(len(response.data[0]), 5)
+
+
+class ProductLessonsListTestCase(APITestCase):
+    def setUp(self):
+        self.owner = User.objects.create(username="owner")
+        self.user = User.objects.create(username="first")
+        # product
+        self.product = Product.objects.create(
+            owner=self.owner,
+        )
+        self.product.users.set([self.user])
+        self.url = reverse("v1:product_lessons", args=[self.user.id, self.product.id])
+        # prepare data without Factories
+        # lessons
+        self.lesson_1 = Lesson.objects.create(
+            name="lesson_first",
+            duration=1,
+        )
+        self.lesson_1.products.set([self.product])
+        self.lesson_2 = Lesson.objects.create(
+            name="lesson_second",
+            duration=2,
+        )
+        self.lesson_2.products.set([self.product])
+
+        # lesson without view
+        self.lesson_3 = Lesson.objects.create(
+            name="lesson_third",
+            duration=3,
+        )
+        self.lesson_3.products.set([self.product])
+
+        # non product lesson
+        self.lesson_4 = Lesson.objects.create(
+            name="lesson_four",
+            duration=4,
+        )
+
+        # views
+        self.view_1 = View.objects.create(
+            lesson_id=self.lesson_1.pk,
+            user_id=self.user.pk,
+            progress=1
+        )
+        self.view_2 = View.objects.create(
+            lesson_id=self.lesson_2.pk,
+            user_id=self.user.pk,
+            progress=2
+        )
+
+    def test_url(self):
+        self.assertEqual(self.url, f"/v1/product_lessons/{self.user.id}/product/{self.product.id}/")
+
+    def test_simple(self):
+        # TODO optimize queries
+        with self.assertNumQueries(2):
+            response = self.client.get(self.url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)

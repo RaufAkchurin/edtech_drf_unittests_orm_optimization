@@ -3,7 +3,7 @@ from django.shortcuts import render, get_object_or_404
 from rest_framework import generics
 
 from HardCodeApp.models import Lesson, View, Product
-from HardCodeApp.serializers import LessonSerializer
+from HardCodeApp.serializers import LessonSerializer, ProductSerializer
 
 
 # Create your views here.
@@ -23,5 +23,13 @@ class UserLessonsView(generics.ListAPIView):
 
 
 class UserProductsView(generics.ListAPIView):
-    serializer_class = LessonSerializer
+    serializer_class = ProductSerializer
     queryset = Product.objects.all()
+
+    def get_queryset(self):
+        print(123)
+        user_id = self.request.parser_context["kwargs"].get("user", None)
+        product_id = self.request.parser_context["kwargs"].get("product", None)
+        return super().get_queryset()
+
+
