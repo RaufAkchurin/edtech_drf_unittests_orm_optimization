@@ -1,6 +1,6 @@
 from django.urls import path
 
-from HardCodeApp.views import LessonsByUserView, LessonsByProductUserView, ProductsView
+from HardCodeApp.views import LessonsByUserView, LessonsByProductUserView, ProductStatAPIView
 
 urlpatterns = [
     path(
@@ -13,6 +13,6 @@ urlpatterns = [
         name="product_lessons", ),
     path(
         'products/',
-        ProductsView.as_view(),
+        ProductStatAPIView.as_view(),
         name="products", ),
 ]

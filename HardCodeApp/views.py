@@ -1,7 +1,13 @@
-from django.db.models import Max
-from rest_framework import generics
+from django.contrib.auth.models import User
+from django.db.models import Max, Sum
+from django.db.models.functions import Coalesce
+from rest_framework import generics, status
+from rest_framework.response import Response
+from rest_framework.views import APIView
+
 from HardCodeApp.models import Lesson, Product
-from HardCodeApp.serializers import LessonSerializer, LessonViewedSerializer, ProductsSerializer
+from HardCodeApp.serializers import LessonSerializer, LessonViewedSerializer, ProductsSerializer, ProductStatSerializer
+
 
 # Create your views here.
 
@@ -29,13 +35,32 @@ class LessonsByProductUserView(generics.ListAPIView):
         return queryset
 
 
-class ProductsView(generics.ListAPIView):
-    serializer_class = ProductsSerializer
-    queryset = Product.objects.all()
+class ProductStatAPIView(APIView):
+    def get(self, request):
+        products = Product.objects.all()
 
-    def get_queryset(self):
+        product_stats = []
+        for product in products:
+            lessons = Lesson.objects.filter(products=product, views__is_finished=True).distinct()
+            total_lessons = lessons.count()
+            total_duration = lessons.aggregate(total_duration=Coalesce(Sum('duration'), 0))['total_duration']
 
-        return super().get_queryset()
+            student_count = product.users.count()
+            acquisition_percentage = (student_count / User.objects.count()) * 100 if User.objects.count() > 0 else 0
+
+            product_stat_data = {
+                'product_id': product.id,
+                'product_name': product.name,
+                'lesson_count': total_lessons,
+                'total_duration': total_duration,
+                'student_count': student_count,
+                'acquisition_percentage': acquisition_percentage
+            }
+
+            product_stats.append(product_stat_data)
+
+        serializer = ProductStatSerializer(product_stats, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
 
 

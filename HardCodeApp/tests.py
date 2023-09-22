@@ -138,6 +138,16 @@ class ProductsListTestCase(APITestCase):
         self.owner = User.objects.create(username="owner")
         self.user = UserFactory()
 
+        self.url = reverse("v1:products")
+
+    def test_url(self):
+        self.assertEqual(self.url, f"/v1/products/")
+
+    def test_num_queries(self):
+        with self.assertNumQueries(1):
+            self.client.get(self.url)
+
+    def test_simple(self):
         # product 1
         self.product_1 = ProductFactory()
         self.product_1.users.set([self.user])
@@ -152,22 +162,48 @@ class ProductsListTestCase(APITestCase):
         self.lesson_2.products.set([self.product_2])
         self.view_2 = ViewFactory(lesson=self.lesson_2, user=self.user)
 
-        self.url = reverse("v1:products")
-
-    def test_url(self):
-        self.assertEqual(self.url, f"/v1/products/")
-
-    def test_num_queries(self):
-        with self.assertNumQueries(3):
-            self.client.get(self.url)
-
-    def test_simple(self):
         response = self.client.get(self.url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(response.data), 2)
 
     def test_user_count(self):
+        # product 1
+        self.product_1 = ProductFactory()
+        self.product_1.users.set([self.user])
+        self.lesson_1 = LessonFactory()
+        self.lesson_1.products.set([self.product_1])
+        self.view_1 = ViewFactory(lesson=self.lesson_1, user=self.user)
+
+        # product 2
+        self.product_2 = ProductFactory()
+        self.product_2.users.set([self.user])
+        self.lesson_2 = LessonFactory()
+        self.lesson_2.products.set([self.product_2])
+        self.view_2 = ViewFactory(lesson=self.lesson_2, user=self.user)
         self.product_2.users.set([user for user in UserFactory.create_batch(4)])
+
         response = self.client.get(self.url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(response.data[1]['user_count'], 4)
+        self.assertEqual(response.data[0]['student_count'], 1)
+        self.assertEqual(response.data[1]['student_count'], 4)
+
+    def test_lessons_count(self):
+        # product 1
+        product_1 = ProductFactory()
+        product_1.users.set([self.user])
+        lesson_1 = LessonFactory()
+        lesson_1.products.set([product_1])
+        ViewFactory(lesson=lesson_1, user=self.user, is_finished=True)
+
+        # product 2
+        product_2 = ProductFactory()
+        product_2.users.set([self.user])
+        lesson_2 = LessonFactory.create_batch(3)
+        for lesson in lesson_2:
+            lesson.products.set([product_2])
+            ViewFactory(lesson=lesson, user=self.user, is_finished=True)
+
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data[0]['lesson_count'], 1)
+        self.assertEqual(response.data[1]['lesson_count'], 3)

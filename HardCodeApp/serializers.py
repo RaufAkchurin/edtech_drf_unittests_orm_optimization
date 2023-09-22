@@ -37,3 +37,10 @@ class ProductsSerializer(serializers.ModelSerializer):
         return product.user_count()
 
 
+class ProductStatSerializer(serializers.Serializer):
+    product_id = serializers.IntegerField()
+    product_name = serializers.CharField()
+    lesson_count = serializers.IntegerField()
+    total_duration = serializers.IntegerField()
+    student_count = serializers.IntegerField()
+    acquisition_percentage = serializers.FloatField()
