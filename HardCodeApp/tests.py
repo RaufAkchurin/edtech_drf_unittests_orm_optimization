@@ -1,4 +1,3 @@
-
 from django.contrib.auth.models import User
 from rest_framework import status
 from rest_framework.test import APITestCase
@@ -53,7 +52,7 @@ class LessonsByUserListTestCase(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
 
     def test_num_queries(self):
-        #TODO как будто не правильно считает
+        # TODO как будто не правильно считает
         with self.assertNumQueries(2):
             response = self.client.get(self.url)
         self.assertEqual(len(response.data), 2)
@@ -64,7 +63,6 @@ class LessonsByUserListTestCase(APITestCase):
             lesson = LessonFactory()
             lesson.products.set([self.product_1])
             ViewFactory(lesson=lesson, user=self.user)
-
 
         with self.assertNumQueries(2):
             self.client.get(self.url)
@@ -143,10 +141,6 @@ class ProductsListTestCase(APITestCase):
     def test_url(self):
         self.assertEqual(self.url, f"/v1/products/")
 
-    def test_num_queries(self):
-        with self.assertNumQueries(1):
-            self.client.get(self.url)
-
     def test_simple(self):
         # product 1
         self.product_1 = ProductFactory()
@@ -162,11 +156,12 @@ class ProductsListTestCase(APITestCase):
         self.lesson_2.products.set([self.product_2])
         self.view_2 = ViewFactory(lesson=self.lesson_2, user=self.user)
 
-        response = self.client.get(self.url)
+        with self.assertNumQueries(11):
+            response = self.client.get(self.url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(response.data), 2)
 
-    def test_user_count(self):
+    def test_student_count(self):
         # product 1
         self.product_1 = ProductFactory()
         self.product_1.users.set([self.user])
@@ -207,3 +202,26 @@ class ProductsListTestCase(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data[0]['lesson_count'], 1)
         self.assertEqual(response.data[1]['lesson_count'], 3)
+
+    def test_total_progress(self):
+        # product 1
+        product_1 = ProductFactory()
+        product_1.users.set([self.user])
+        lesson_1 = LessonFactory()
+        lesson_1.products.set([product_1])
+        lesson_2 = LessonFactory()
+        lesson_2.products.set([product_1])
+        view_1 = ViewFactory(
+            lesson=lesson_1,
+            user=self.user,
+            progress=75,
+            is_finished=True)
+        view_2 = ViewFactory(
+            lesson=lesson_2,
+            user=self.user,
+            progress=75,
+            is_finished=True)
+
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data[0]['total_progress'], 150)

@@ -5,8 +5,8 @@ from rest_framework import generics, status
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from HardCodeApp.models import Lesson, Product
-from HardCodeApp.serializers import LessonSerializer, LessonViewedSerializer, ProductsSerializer, ProductStatSerializer
+from HardCodeApp.models import Lesson, Product, View
+from HardCodeApp.serializers import LessonSerializer, LessonViewedSerializer, ProductStatSerializer
 
 
 # Create your views here.
@@ -41,9 +41,13 @@ class ProductStatAPIView(APIView):
 
         product_stats = []
         for product in products:
+            # lessons
             lessons = Lesson.objects.filter(products=product, views__is_finished=True).distinct()
             total_lessons = lessons.count()
-            total_duration = lessons.aggregate(total_duration=Coalesce(Sum('duration'), 0))['total_duration']
+
+            # views for total_progress
+            views = View.objects.filter(lesson__in=lessons)
+            total_progress = views.aggregate(total_sum=Sum('progress'))['total_sum']
 
             student_count = product.users.count()
             acquisition_percentage = (student_count / User.objects.count()) * 100 if User.objects.count() > 0 else 0
@@ -51,8 +55,8 @@ class ProductStatAPIView(APIView):
             product_stat_data = {
                 'product_id': product.id,
                 'product_name': product.name,
-                'lesson_count': total_lessons,
-                'total_duration': total_duration,
+                'lesson_count': total_lessons,  # lessons_finished
+                'total_progress': total_progress,
                 'student_count': student_count,
                 'acquisition_percentage': acquisition_percentage
             }
@@ -61,6 +65,3 @@ class ProductStatAPIView(APIView):
 
         serializer = ProductStatSerializer(product_stats, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
-
-
-
