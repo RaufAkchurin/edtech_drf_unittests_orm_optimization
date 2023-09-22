@@ -17,6 +17,9 @@ class Product(models.Model):
         related_name="users_products",
     )
 
+    def user_count(self):
+        return self.users.count()
+
     def __str__(self):
         return f"{self.name}"
 

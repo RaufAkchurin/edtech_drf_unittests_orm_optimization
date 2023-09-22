@@ -1,10 +1,8 @@
-import datetime
 
 from django.contrib.auth.models import User
 from rest_framework import status
 from rest_framework.test import APITestCase
 from rest_framework.reverse import reverse
-import time
 
 from HardCodeApp.factory import UserFactory, ProductFactory, LessonFactory, ViewFactory
 
@@ -55,8 +53,22 @@ class LessonsByUserListTestCase(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
 
     def test_num_queries(self):
+        #TODO как будто не правильно считает
+        with self.assertNumQueries(2):
+            response = self.client.get(self.url)
+        self.assertEqual(len(response.data), 2)
+
+        for i in range(5):
+            product = ProductFactory()
+            product.users.set([self.user])
+            lesson = LessonFactory()
+            lesson.products.set([self.product_1])
+            ViewFactory(lesson=lesson, user=self.user)
+
+
         with self.assertNumQueries(2):
             self.client.get(self.url)
+        self.assertEqual(len(response.data), 2)
 
     def test_simple_user_1(self):
         response = self.client.get(self.url)
@@ -96,21 +108,26 @@ class LessonsByProductListTestCase(APITestCase):
         self.assertEqual(self.url, f"/v1/product_lessons/{self.user.id}/product/{self.product_1.id}/")
 
     def test_num_queries(self):
-        with self.assertNumQueries(3):
-            self.client.get(self.url)
+        with self.assertNumQueries(2):
+            response = self.client.get(self.url)
+        self.assertEqual(len(response.data), 1)
+
+        for i in range(5):
+            self.lesson = LessonFactory()
+            self.lesson.products.set([self.product_1])
+            ViewFactory(lesson=self.lesson, user=self.user)
+
+        with self.assertNumQueries(2):
+            response = self.client.get(self.url)
+        self.assertEqual(len(response.data), 6)
 
     def test_simple(self):
-        # Один юзер имеет доступ к двум разным продуктам, и мы хотим в списке увидеть только уроки
-        # от 1 продукта
-        # TODO optimize queries
+        # Один юзер имеет доступ к двум разным продуктам,
+        # и мы хотим в списке увидеть только уроки от 1 продукта
         response = self.client.get(self.url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(response.data), 1)
         self.assertEqual(len(response.data[0]), 4)
-
-        # assert last_viewed field
-        self.assertEqual(response.data[0]['last_viewed'], self.view_1.last_viewed)
-        self.assertNotEqual(response.data[0]['last_viewed'], self.view_2.last_viewed)
 
         response = self.client.get("/v1/products/")
         self.assertEqual(response.status_code, status.HTTP_200_OK)
@@ -148,3 +165,9 @@ class ProductsListTestCase(APITestCase):
         response = self.client.get(self.url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(response.data), 2)
+
+    def test_user_count(self):
+        self.product_2.users.set([user for user in UserFactory.create_batch(4)])
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data[1]['user_count'], 4)

@@ -3,7 +3,7 @@ import random
 import factory
 from django.contrib.auth import get_user_model
 from factory import SubFactory, Faker
-from factory.django import DjangoModelFactory, ImageField
+from factory.django import DjangoModelFactory
 
 from HardCodeApp.models import Product, Lesson, View
 

@@ -19,21 +19,21 @@ class LessonSerializer(serializers.ModelSerializer):
 
 class LessonViewedSerializer(serializers.ModelSerializer):
     views = ViewSerializer(many=True)
-    last_viewed = serializers.SerializerMethodField()
+    last_viewed = serializers.DateTimeField()
 
     class Meta:
         model = Lesson
         fields = ('id', 'name', 'views', 'last_viewed')
 
-    def get_last_viewed(self, obj):
-        last_viewed = View.objects.filter(lesson=obj).values('last_viewed')[:1]
-        if last_viewed:
-            return last_viewed[0]['last_viewed']
-        else:
-            return None
-
 
 class ProductsSerializer(serializers.ModelSerializer):
+    user_count = serializers.SerializerMethodField()
+
     class Meta:
         model = Product
-        fields = "__all__"
+        fields = ('id', 'name', 'user_count')
+
+    def get_user_count(self, product):
+        return product.user_count()
+
+
