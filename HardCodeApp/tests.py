@@ -117,8 +117,9 @@ class LessonsByProductListTestCase(APITestCase):
         self.assertEqual(len(response.data), 6)
 
     def test_simple(self):
-        # Один юзер имеет доступ к двум разным продуктам,
-        # и мы хотим в списке увидеть только уроки от 1 продукта
+        # One user can acess to 2 different products
+        # but we wont to see in list only lessons from 1 product
+
         response = self.client.get(self.url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(response.data), 1)
@@ -244,5 +245,5 @@ class ProductsListTestCase(APITestCase):
         product_2.users.set([user for user in UserFactory.create_batch(4)])
 
         with self.assertNumQueries(10):
-            response = self.client.get(self.url)
+            self.client.get(self.url)
 

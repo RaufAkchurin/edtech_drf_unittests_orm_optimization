@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from HardCodeApp.models import Lesson, View, Product
+from HardCodeApp.models import Lesson, View
 
 
 class ViewSerializer(serializers.ModelSerializer):
