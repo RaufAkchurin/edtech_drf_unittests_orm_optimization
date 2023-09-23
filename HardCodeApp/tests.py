@@ -130,9 +130,7 @@ class LessonsByProductListTestCase(APITestCase):
 
 class ProductsListTestCase(APITestCase):
     def setUp(self):
-        self.owner = User.objects.create(username="owner")
         self.user = UserFactory()
-
         self.url = reverse("v1:products")
 
     def test_url(self):
@@ -221,25 +219,30 @@ class ProductsListTestCase(APITestCase):
         response = self.client.get(self.url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data[0]['total_progress'], 150)
-        self.assertEqual(response.data[0]['shopping_percentage'], 33.33333333333333)
+        self.assertEqual(response.data[0]['shopping_percentage'], 50)
 
     def test_num_queries(self):
-        #TODO добавить уроков, добавить юзеров пустых, проверить что прогресс проставился везде
+        user_1 = UserFactory()
+        user_2 = UserFactory()
+        user_3 = UserFactory()
+
         # product 1
-        self.product_1 = ProductFactory()
-        self.product_1.users.set([self.user])
-        self.lesson_1 = LessonFactory()
-        self.lesson_1.products.set([self.product_1])
-        self.view_1 = ViewFactory(lesson=self.lesson_1, user=self.user)
+        product_1 = ProductFactory()
+        product_1.users.set([user_1])
+        ViewFactory(user=user_1)
 
         # product 2
-        self.product_2 = ProductFactory()
-        self.product_2.users.set([self.user])
-        self.lesson_2 = LessonFactory()
-        self.lesson_2.products.set([self.product_2])
-        self.view_2 = ViewFactory(lesson=self.lesson_2, user=self.user)
-        self.product_2.users.set([user for user in UserFactory.create_batch(4)])
+        product_2 = ProductFactory()
+        product_2.users.set([user_2])
+        ViewFactory(user=user_2)
 
-        with self.assertNumQueries(11):
+        # product 3
+        product_3 = ProductFactory()
+        product_3.users.set([user_3])
+        ViewFactory(user=user_3)
+
+        product_2.users.set([user for user in UserFactory.create_batch(4)])
+
+        with self.assertNumQueries(10):
             response = self.client.get(self.url)
 

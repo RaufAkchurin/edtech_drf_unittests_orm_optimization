@@ -1,6 +1,5 @@
 from django.contrib.auth.models import User
 from django.db.models import Max, Sum
-from django.db.models.functions import Coalesce
 from rest_framework import generics, status
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -37,20 +36,22 @@ class LessonsByProductUserView(generics.ListAPIView):
 
 class ProductStatAPIView(APIView):
     def get(self, request):
-        products = Product.objects.all()
+        products = Product.objects.select_related('owner').prefetch_related('users', 'users__views')
 
         product_stats = []
+        total_user_count = User.objects.count()
+
         for product in products:
-            # lessons
-            lessons = Lesson.objects.filter(products=product, views__is_finished=True).distinct()
+            lessons = Lesson.objects.filter(products=product, views__is_finished=True)
+            views = View.objects.filter(lesson__in=lessons)
+
+            # Calculate total progress and lessons finished
+            total_progress = views.aggregate(total_sum=Sum('progress'))['total_sum']
             lessons_finished = lessons.count()
 
-            # views for total_progress
-            views = View.objects.filter(lesson__in=lessons)
-            total_progress = views.aggregate(total_sum=Sum('progress'))['total_sum']
-
+            # Calculate shopping percentage
             student_count = product.users.count()
-            shopping_percentage = (student_count / User.objects.count()) * 100 if User.objects.count() > 0 else 0
+            shopping_percentage = (student_count / total_user_count) * 100 if total_user_count > 0 else 0
 
             product_stat_data = {
                 'product_id': product.id,
@@ -65,3 +66,4 @@ class ProductStatAPIView(APIView):
 
         serializer = ProductStatSerializer(product_stats, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
+
