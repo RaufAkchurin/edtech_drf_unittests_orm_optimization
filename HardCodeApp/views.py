@@ -43,22 +43,22 @@ class ProductStatAPIView(APIView):
         for product in products:
             # lessons
             lessons = Lesson.objects.filter(products=product, views__is_finished=True).distinct()
-            total_lessons = lessons.count()
+            lessons_finished = lessons.count()
 
             # views for total_progress
             views = View.objects.filter(lesson__in=lessons)
             total_progress = views.aggregate(total_sum=Sum('progress'))['total_sum']
 
             student_count = product.users.count()
-            acquisition_percentage = (student_count / User.objects.count()) * 100 if User.objects.count() > 0 else 0
+            shopping_percentage = (student_count / User.objects.count()) * 100 if User.objects.count() > 0 else 0
 
             product_stat_data = {
                 'product_id': product.id,
                 'product_name': product.name,
-                'lesson_count': total_lessons,  # lessons_finished
+                'lessons_finished': lessons_finished,
                 'total_progress': total_progress,
                 'student_count': student_count,
-                'acquisition_percentage': acquisition_percentage
+                'shopping_percentage': shopping_percentage
             }
 
             product_stats.append(product_stat_data)

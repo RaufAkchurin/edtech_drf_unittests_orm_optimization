@@ -52,7 +52,6 @@ class LessonsByUserListTestCase(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
 
     def test_num_queries(self):
-        # TODO как будто не правильно считает
         with self.assertNumQueries(2):
             response = self.client.get(self.url)
         self.assertEqual(len(response.data), 2)
@@ -60,13 +59,11 @@ class LessonsByUserListTestCase(APITestCase):
         for i in range(5):
             product = ProductFactory()
             product.users.set([self.user])
-            lesson = LessonFactory()
-            lesson.products.set([self.product_1])
-            ViewFactory(lesson=lesson, user=self.user)
+            ViewFactory(user=self.user)
 
         with self.assertNumQueries(2):
-            self.client.get(self.url)
-        self.assertEqual(len(response.data), 2)
+            response = self.client.get(self.url)
+        self.assertEqual(len(response.data), 7)
 
     def test_simple_user_1(self):
         response = self.client.get(self.url)
@@ -156,8 +153,7 @@ class ProductsListTestCase(APITestCase):
         self.lesson_2.products.set([self.product_2])
         self.view_2 = ViewFactory(lesson=self.lesson_2, user=self.user)
 
-        with self.assertNumQueries(11):
-            response = self.client.get(self.url)
+        response = self.client.get(self.url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(response.data), 2)
 
@@ -200,8 +196,8 @@ class ProductsListTestCase(APITestCase):
 
         response = self.client.get(self.url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(response.data[0]['lesson_count'], 1)
-        self.assertEqual(response.data[1]['lesson_count'], 3)
+        self.assertEqual(response.data[0]['lessons_finished'], 1)
+        self.assertEqual(response.data[1]['lessons_finished'], 3)
 
     def test_total_progress(self):
         # product 1
@@ -211,12 +207,12 @@ class ProductsListTestCase(APITestCase):
         lesson_1.products.set([product_1])
         lesson_2 = LessonFactory()
         lesson_2.products.set([product_1])
-        view_1 = ViewFactory(
+        ViewFactory(
             lesson=lesson_1,
             user=self.user,
             progress=75,
             is_finished=True)
-        view_2 = ViewFactory(
+        ViewFactory(
             lesson=lesson_2,
             user=self.user,
             progress=75,
@@ -225,3 +221,25 @@ class ProductsListTestCase(APITestCase):
         response = self.client.get(self.url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data[0]['total_progress'], 150)
+        self.assertEqual(response.data[0]['shopping_percentage'], 33.33333333333333)
+
+    def test_num_queries(self):
+        #TODO добавить уроков, добавить юзеров пустых, проверить что прогресс проставился везде
+        # product 1
+        self.product_1 = ProductFactory()
+        self.product_1.users.set([self.user])
+        self.lesson_1 = LessonFactory()
+        self.lesson_1.products.set([self.product_1])
+        self.view_1 = ViewFactory(lesson=self.lesson_1, user=self.user)
+
+        # product 2
+        self.product_2 = ProductFactory()
+        self.product_2.users.set([self.user])
+        self.lesson_2 = LessonFactory()
+        self.lesson_2.products.set([self.product_2])
+        self.view_2 = ViewFactory(lesson=self.lesson_2, user=self.user)
+        self.product_2.users.set([user for user in UserFactory.create_batch(4)])
+
+        with self.assertNumQueries(11):
+            response = self.client.get(self.url)
+

@@ -26,21 +26,10 @@ class LessonViewedSerializer(serializers.ModelSerializer):
         fields = ('id', 'name', 'views', 'last_viewed')
 
 
-class ProductsSerializer(serializers.ModelSerializer):
-    user_count = serializers.SerializerMethodField()
-
-    class Meta:
-        model = Product
-        fields = ('id', 'name', 'user_count')
-
-    def get_user_count(self, product):
-        return product.user_count()
-
-
 class ProductStatSerializer(serializers.Serializer):
     product_id = serializers.IntegerField()
     product_name = serializers.CharField()
-    lesson_count = serializers.IntegerField()
+    lessons_finished = serializers.IntegerField()
     total_progress = serializers.IntegerField()
     student_count = serializers.IntegerField()
-    acquisition_percentage = serializers.FloatField()
+    shopping_percentage = serializers.FloatField()

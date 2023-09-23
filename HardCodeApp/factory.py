@@ -20,6 +20,7 @@ class ProductFactory(DjangoModelFactory):
     class Meta:
         model = Product
 
+    name = Faker("word")
     owner = SubFactory(UserFactory)
 
 
